@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- 保持原有 head 内容 -->
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- 保持原有 HTML 结构 -->
+
+    <script>
+        // 修改发送逻辑
+        document.getElementById('send-btn').addEventListener('click', async () => {
+            const userInput = document.getElementById('user-input').value.trim();
+            const prompt = document.getElementById('prompt-input').value.trim();
+
+            if (!userInput || !prompt) {
+                alert('输入不能为空');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: userInput, prompt: prompt })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                // 动态生成结果
+                const resultHtml = `
+                    <div class="container mx-auto p-8 bg-white shadow-md rounded-md">
+                        <h2 class="text-2xl font-bold mb-4">分析结果</h2>
+                        <p><strong>风险等级：</strong>
+                            <span class="${getRiskColor(data.risk_level)}">${data.risk_level}</span>
+                        </p>
+                        <p><strong>评分：</strong>${data.score}</p>
+                        <h3 class="text-xl font-bold mt-4 mb-2">指标分析</h3>
+                        <ul class="list-disc pl-6">${data.analysis.map(i => `<li>${i}</li>`).join('')}</ul>
+                        <h3 class="text-xl font-bold mt-4 mb-2">建议</h3>
+                        <ul class="list-disc pl-6">${data.suggestions.map(i => `<li>${i}</li>`).join('')}</ul>
+                    </div>
+                `;
+                
+                document.getElementById('result-container').innerHTML = resultHtml;
+                
+            } catch (error) {
+                alert(`错误：${error.message}`);
+            }
+        });
+
+        function getRiskColor(level) {
+            if (level.includes('绿色')) return 'text-green-500';
+            if (level.includes('黄色')) return 'text-yellow-500';
+            return 'text-red-500';
+        }
+    </script>
+</body>
+</html>
